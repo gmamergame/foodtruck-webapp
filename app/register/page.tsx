@@ -104,10 +104,9 @@ export default function RegisterPage() {
 
 			setSuccess(t.success);
 
-			setName("");
-			setEmail("");
-			setPassword("");
-			setConfirmPassword("");
+			setTimeout(() => {
+				window.location.href = "/login";
+			}, 1000);
 		} catch {
 			setError(t.networkError);
 		} finally {
