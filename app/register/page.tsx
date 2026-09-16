@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 
 const content = {
 	nl: {
@@ -20,7 +20,12 @@ const content = {
 		createAccount: "Account aanmaken",
 		alreadyAccount: "Heb je al een account?",
 		login: "Inloggen",
-        back: "Terug",
+		back: "Terug",
+		passwordMismatch: "De wachtwoorden komen niet overeen.",
+		networkError: "Kan geen verbinding maken met de server.",
+		registrationFailed: "Registreren mislukt.",
+		creating: "Account aanmaken...",
+		success: "Account succesvol aangemaakt!",
 	},
 	en: {
 		tagline: "Fresh food, fresh drops.",
@@ -38,21 +43,89 @@ const content = {
 		createAccount: "Create account",
 		alreadyAccount: "Already have an account?",
 		login: "Log in",
-        back: "Back",
+		back: "Back",
+		passwordMismatch: "The passwords do not match.",
+		networkError: "Could not connect to the server.",
+		registrationFailed: "Registration failed.",
+		creating: "Creating account...",
+		success: "Account created successfully!",
 	},
 };
 
 export default function RegisterPage() {
 	const [language, setLanguage] = useState<"nl" | "en">("nl");
+
+	const [name, setName] = useState("");
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
+
+	const [error, setError] = useState("");
+	const [success, setSuccess] = useState("");
+	const [loading, setLoading] = useState(false);
+
 	const t = content[language];
+
+	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+
+		setError("");
+		setSuccess("");
+
+		if (password !== confirmPassword) {
+			setError(t.passwordMismatch);
+			return;
+		}
+
+		setLoading(true);
+
+		try {
+			const response = await fetch(
+				"http://localhost:4000/api/auth/register",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						name,
+						email,
+						password,
+					}),
+				}
+			);
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				setError(data.error || t.registrationFailed);
+				return;
+			}
+
+			setSuccess(t.success);
+
+			setName("");
+			setEmail("");
+			setPassword("");
+			setConfirmPassword("");
+		} catch {
+			setError(t.networkError);
+		} finally {
+			setLoading(false);
+		}
+	}
 
 	return (
 		<main className="flex min-h-screen items-center justify-center bg-zinc-950 px-5 py-10 text-white">
 			<section className="w-full max-w-md">
 				<div className="mb-8 text-center">
-					<Link href="/" className="fixed left-5 top-5 rounded-full bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-300 ring-1 ring-white/10 transition hover:bg-zinc-800 hover:text-white">
+					<Link
+						href="/"
+						className="fixed left-5 top-5 rounded-full bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-300 ring-1 ring-white/10 transition hover:bg-zinc-800 hover:text-white"
+					>
 						{t.back}
 					</Link>
+
 					<Link href="/" className="text-xl font-black tracking-tight">
 						FOODTRUCK<span className="text-orange-400">.</span>
 					</Link>
@@ -70,9 +143,15 @@ export default function RegisterPage() {
 					</p>
 				</div>
 
-				<form className="space-y-5 rounded-3xl bg-zinc-900 p-6 ring-1 ring-white/10 sm:p-8">
+				<form
+					onSubmit={handleSubmit}
+					className="space-y-5 rounded-3xl bg-zinc-900 p-6 ring-1 ring-white/10 sm:p-8"
+				>
 					<div>
-						<label htmlFor="name" className="mb-2 block text-sm font-bold">
+						<label
+							htmlFor="name"
+							className="mb-2 block text-sm font-bold"
+						>
 							{t.name}
 						</label>
 
@@ -82,13 +161,18 @@ export default function RegisterPage() {
 							type="text"
 							autoComplete="name"
 							required
+							value={name}
+							onChange={(event) => setName(event.target.value)}
 							className="w-full rounded-xl border border-white/10 bg-zinc-800 px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20"
 							placeholder={t.namePlaceholder}
 						/>
 					</div>
 
 					<div>
-						<label htmlFor="email" className="mb-2 block text-sm font-bold">
+						<label
+							htmlFor="email"
+							className="mb-2 block text-sm font-bold"
+						>
 							{t.email}
 						</label>
 
@@ -98,13 +182,18 @@ export default function RegisterPage() {
 							type="email"
 							autoComplete="email"
 							required
+							value={email}
+							onChange={(event) => setEmail(event.target.value)}
 							className="w-full rounded-xl border border-white/10 bg-zinc-800 px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20"
 							placeholder={t.emailPlaceholder}
 						/>
 					</div>
 
 					<div>
-						<label htmlFor="password" className="mb-2 block text-sm font-bold">
+						<label
+							htmlFor="password"
+							className="mb-2 block text-sm font-bold"
+						>
 							{t.password}
 						</label>
 
@@ -115,6 +204,8 @@ export default function RegisterPage() {
 							autoComplete="new-password"
 							minLength={8}
 							required
+							value={password}
+							onChange={(event) => setPassword(event.target.value)}
 							className="w-full rounded-xl border border-white/10 bg-zinc-800 px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20"
 							placeholder={t.passwordPlaceholder}
 						/>
@@ -135,6 +226,10 @@ export default function RegisterPage() {
 							autoComplete="new-password"
 							minLength={8}
 							required
+							value={confirmPassword}
+							onChange={(event) =>
+								setConfirmPassword(event.target.value)
+							}
 							className="w-full rounded-xl border border-white/10 bg-zinc-800 px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20"
 							placeholder={t.confirmPasswordPlaceholder}
 						/>
@@ -151,11 +246,24 @@ export default function RegisterPage() {
 						<span>{t.terms}</span>
 					</label>
 
+					{error && (
+						<p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-400">
+							{error}
+						</p>
+					)}
+
+					{success && (
+						<p className="rounded-xl bg-green-500/10 px-4 py-3 text-sm font-medium text-green-400">
+							{success}
+						</p>
+					)}
+
 					<button
 						type="submit"
-						className="w-full rounded-xl bg-orange-400 px-5 py-3.5 font-bold text-black transition hover:bg-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2 focus:ring-offset-zinc-900"
+						disabled={loading}
+						className="w-full rounded-xl bg-orange-400 px-5 py-3.5 font-bold text-black transition hover:bg-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
 					>
-						{t.createAccount}
+						{loading ? t.creating : t.createAccount}
 					</button>
 				</form>
 
