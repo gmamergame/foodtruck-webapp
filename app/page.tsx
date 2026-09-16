@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const content = {
   nl: {
@@ -36,29 +38,63 @@ const lastDrop = {
     en: "Last drop",
   },
   menu: [
-    { name: "Classic Burger", price: 8.00 },
-    { name: "Loaded Fries", price: 6.00 },
-    { name: "Cola", price: 2.00 },
+    { name: "Classic Burger", price: 8.0 },
+    { name: "Loaded Fries", price: 6.0 },
+    { name: "Cola", price: 2.0 },
   ],
 };
 
 export default function Home() {
   const [language, setLanguage] = useState<"nl" | "en">("nl");
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const router = useRouter();
   const t = content[language];
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const response = await fetch(
+          "http://localhost:4000/api/auth/me",
+          {
+            credentials: "include",
+          }
+        );
+
+        if (response.ok) {
+          router.replace("/account");
+          return;
+        }
+      } catch {
+        // Backend unavailable, keep showing the public homepage.
+      }
+
+      setCheckingAuth(false);
+    }
+
+    checkAuth();
+  }, [router]);
+
+  if (checkingAuth) {
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <nav className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
-        <div className="text-xl font-black tracking-tight">
+        <Link
+          href="/"
+          className="text-xl font-black tracking-tight"
+        >
           FOODTRUCK<span className="text-orange-400">.</span>
-        </div>
+        </Link>
 
-        <a
+        <Link
           href="/login"
           className="rounded-full bg-orange-400 px-5 py-2.5 text-sm font-bold text-black"
         >
           {t.login}
-        </a>
+        </Link>
       </nav>
 
       <section className="mx-auto max-w-5xl px-5 pb-12 pt-10">
@@ -74,12 +110,12 @@ export default function Home() {
           {t.description}
         </p>
 
-        <a
+        <Link
           href="/register"
           className="mt-8 inline-block rounded-full bg-orange-400 px-7 py-4 font-bold text-black"
         >
           {t.createAccount}
-        </a>
+        </Link>
       </section>
 
       <section className="mx-auto max-w-5xl px-5 pb-16">
@@ -115,7 +151,9 @@ export default function Home() {
                 key={item.name}
                 className="flex items-center justify-between rounded-xl bg-zinc-800 p-4"
               >
-                <span className="font-medium">{item.name}</span>
+                <span className="font-medium">
+                  {item.name}
+                </span>
 
                 <span className="font-bold text-orange-400">
                   €{item.price.toFixed(2)}
@@ -130,9 +168,9 @@ export default function Home() {
         {t.footer}
       </footer>
 
-      {/* Language switcher */}
       <div className="fixed bottom-5 right-5 flex items-center gap-1 rounded-full bg-zinc-900 p-1 shadow-lg ring-1 ring-white/10">
         <button
+          type="button"
           onClick={() => setLanguage("nl")}
           className={`rounded-full px-3 py-2 text-sm font-bold transition ${
             language === "nl"
@@ -144,6 +182,7 @@ export default function Home() {
         </button>
 
         <button
+          type="button"
           onClick={() => setLanguage("en")}
           className={`rounded-full px-3 py-2 text-sm font-bold transition ${
             language === "en"
