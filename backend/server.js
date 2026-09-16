@@ -1,13 +1,15 @@
-const express = require("express");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-require("dotenv").config();
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import "dotenv/config";
 
-const authRoutes = require("./routes/authRoutes");
+import authRoutes from "./routes/authRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+app.use(helmet());
 app.use(cors({
   origin: "http://localhost:3000",
   credentials: true,
